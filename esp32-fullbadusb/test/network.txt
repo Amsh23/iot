@@ -1,0 +1,83 @@
+
+Windows IP Configuration
+
+   Host Name . . . . . . . . . . . . : DESKTOP-591F5TF
+   Primary Dns Suffix  . . . . . . . : 
+   Node Type . . . . . . . . . . . . : Hybrid
+   IP Routing Enabled. . . . . . . . : No
+   WINS Proxy Enabled. . . . . . . . : No
+
+Unknown adapter s23a1u155.1:
+
+   Connection-specific DNS Suffix  . : 
+   Description . . . . . . . . . . . : WireGuard Tunnel
+   Physical Address. . . . . . . . . : 
+   DHCP Enabled. . . . . . . . . . . : No
+   Autoconfiguration Enabled . . . . : Yes
+   Link-local IPv6 Address . . . . . : fe80::650a:e4ec:9524:59f1%64(Preferred) 
+   IPv4 Address. . . . . . . . . . . : 10.10.10.155(Preferred) 
+   Subnet Mask . . . . . . . . . . . : 255.255.255.0
+   Default Gateway . . . . . . . . . : 0.0.0.0
+   DNS Servers . . . . . . . . . . . : 8.8.8.8
+   NetBIOS over Tcpip. . . . . . . . : Enabled
+
+Unknown adapter Local Area Connection:
+
+   Media State . . . . . . . . . . . : Media disconnected
+   Connection-specific DNS Suffix  . : 
+   Description . . . . . . . . . . . : TAP-Windows Adapter V9 for OpenVPN Connect
+   Physical Address. . . . . . . . . : 00-FF-AF-74-A0-93
+   DHCP Enabled. . . . . . . . . . . : No
+   Autoconfiguration Enabled . . . . : Yes
+
+Unknown adapter Tailscale:
+
+   Connection-specific DNS Suffix  . : 
+   Description . . . . . . . . . . . : Tailscale Tunnel
+   Physical Address. . . . . . . . . : 
+   DHCP Enabled. . . . . . . . . . . : No
+   Autoconfiguration Enabled . . . . : Yes
+   Link-local IPv6 Address . . . . . : fe80::650a:e4ec:9524:59f1%53(Preferred) 
+   Autoconfiguration IPv4 Address. . : 169.254.83.107(Preferred) 
+   Subnet Mask . . . . . . . . . . . : 255.255.0.0
+   Default Gateway . . . . . . . . . : 
+   NetBIOS over Tcpip. . . . . . . . : Disabled
+
+Unknown adapter OpenVPN Connect DCO Adapter:
+
+   Media State . . . . . . . . . . . : Media disconnected
+   Connection-specific DNS Suffix  . : 
+   Description . . . . . . . . . . . : OpenVPN Data Channel Offload
+   Physical Address. . . . . . . . . : 
+   DHCP Enabled. . . . . . . . . . . : No
+   Autoconfiguration Enabled . . . . : Yes
+
+Ethernet adapter Ethernet:
+
+   Connection-specific DNS Suffix  . : 
+   Description . . . . . . . . . . . : Intel(R) Ethernet Controller (3) I225-V
+   Physical Address. . . . . . . . . : 04-42-1A-2E-9B-54
+   DHCP Enabled. . . . . . . . . . . : Yes
+   Autoconfiguration Enabled . . . . : Yes
+   Link-local IPv6 Address . . . . . : fe80::2a98:659d:17d0:2016%30(Preferred) 
+   IPv4 Address. . . . . . . . . . . : 192.168.1.2(Preferred) 
+   Subnet Mask . . . . . . . . . . . : 255.255.255.0
+   Lease Obtained. . . . . . . . . . : Monday, July 27, 2026 2:24:51 PM
+   Lease Expires . . . . . . . . . . : Tuesday, July 28, 2026 2:24:51 PM
+   Default Gateway . . . . . . . . . : fe80::a5a:11ff:fe51:1504%30
+                                       192.168.1.1
+   DHCP Server . . . . . . . . . . . : 192.168.1.1
+   DHCPv6 IAID . . . . . . . . . . . : 67387930
+   DHCPv6 Client DUID. . . . . . . . : 00-01-00-01-2D-F9-58-9F-04-42-1A-2E-9B-54
+   DNS Servers . . . . . . . . . . . : 5.200.200.200
+                                       217.218.127.127
+   NetBIOS over Tcpip. . . . . . . . : Enabled
+
+Ethernet adapter RobopingTap:
+
+   Media State . . . . . . . . . . . : Media disconnected
+   Connection-specific DNS Suffix  . : 
+   Description . . . . . . . . . . . : TAP-Windows Adapter V9
+   Physical Address. . . . . . . . . : 00-FF-41-7F-A5-43
+   DHCP Enabled. . . . . . . . . . . : Yes
+   Autoconfiguration Enabled . . . . : Yes

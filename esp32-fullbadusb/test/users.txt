@@ -1,0 +1,8 @@
+
+User accounts for \\DESKTOP-591F5TF
+
+-------------------------------------------------------------------------------
+Administrator            Arian                    DefaultAccount           
+Guest                    hacker                   WDAGUtilityAccount       
+The command completed successfully.
+
